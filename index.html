@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>MissionTrack</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#c97a8f"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;background:#fdf6f0;color:#2d2d2d;min-height:100vh;}
+:root{
+  --pink:#f9c6d0;--pink-dark:#c97a8f;--pink-text:#7a3048;
+  --lavender:#e8d5f5;--lav-dark:#9b72c0;--lav-text:#4a2270;
+  --mint:#c9f0e1;--mint-dark:#4aad82;--mint-text:#1a5c42;
+  --peach:#fde2c8;--peach-dark:#e89456;--peach-text:#7a4010;
+  --sky:#c8e8fa;--sky-dark:#5aaad4;--sky-text:#1a4a6a;
+  --yellow:#fdf0c2;--yellow-dark:#d4a82a;--yellow-text:#6a4a00;
+  --bg:#fdf6f0;--card:#fff;--border:#ede0d4;--text:#2d2d2d;--muted:#888;
+  --radius:14px;--radius-sm:8px;
+}
+.app{display:flex;flex-direction:column;min-height:100vh;}
+.header{background:#fff;border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:18px;font-weight:600;color:#c97a8f;display:flex;align-items:center;gap:8px;}
+.header-actions{display:flex;gap:10px;align-items:center;}
+.btn{border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;padding:8px 16px;transition:.15s;}
+.btn-primary{background:var(--pink-dark);color:#fff;}
+.btn-primary:hover{background:#b5617a;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{background:#f5ece6;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.nav{background:#fff;border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 24px;}
+.nav-tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;}
+.nav-tab.active{color:var(--pink-dark);border-bottom-color:var(--pink-dark);}
+.main{padding:24px;flex:1;}
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px;border:1px solid var(--border);text-align:center;}
+.stat-num{font-size:26px;font-weight:600;color:var(--pink-dark);}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px;}
+.quote-bar{background:linear-gradient(135deg,var(--lavender),var(--pink));border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+.quote-text{font-size:14px;color:var(--lav-text);font-style:italic;flex:1;}
+.quote-icon{font-size:22px;color:var(--lav-dark);}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.section-title{font-size:16px;font-weight:600;}
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.mission-card{background:#fff;border-radius:var(--radius);padding:18px;border:1px solid var(--border);cursor:pointer;transition:.15s;position:relative;}
+.mission-card:hover{border-color:#c97a8f;box-shadow:0 2px 12px rgba(201,122,143,.12);}
+.mission-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.mission-title{font-size:15px;font-weight:600;}
+.cat-badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;}
+.progress-row{margin:10px 0;}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;}
+.progress-bar{height:6px;background:#f0e6ea;border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:var(--pink-dark);transition:.4s;}
+.mission-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+.streak{font-size:12px;color:var(--peach-dark);font-weight:500;}
+.days-left{font-size:11px;color:var(--muted);}
+.today-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+.check-circle{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;}
+.check-circle.done{background:var(--mint-dark);border-color:var(--mint-dark);color:#fff;}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty i{font-size:48px;color:#e0d0d8;display:block;margin-bottom:12px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:var(--radius);padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-size:17px;font-weight:600;}
+.close-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;}
+.form-group{margin-bottom:16px;}
+label{font-size:13px;font-weight:500;display:block;margin-bottom:5px;color:#555;}
+input,textarea,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:#fdf6f0;color:var(--text);}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pink-dark);}
+textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stars{display:flex;gap:4px;margin-top:4px;}
+.star{font-size:22px;cursor:pointer;color:#ddd;transition:.1s;}
+.star.on{color:#f5c542;}
+.heatmap{display:flex;gap:3px;flex-wrap:wrap;margin-top:8px;}
+.heat-cell{width:14px;height:14px;border-radius:3px;background:#f0e6ea;}
+.heat-cell.d1{background:#f5c6d0;}
+.heat-cell.d2{background:#e899b0;}
+.heat-cell.d3{background:#d4638a;}
+.heat-cell.d4{background:#c0365e;}
+.detail-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(--pink-dark);font-size:22px;padding:0;}
+.detail-title{font-size:20px;font-weight:600;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.detail-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.detail-card-title{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.entries-list{display:flex;flex-direction:column;gap:10px;}
+.entry-item{background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;}
+.entry-date{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.entry-text{font-size:14px;line-height:1.6;margin-bottom:6px;}
+.entry-meta{display:flex;gap:12px;font-size:12px;color:var(--muted);}
+.chart-wrap{position:relative;height:200px;width:100%;}
+.milestone-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.milestone-item:last-child{border-bottom:none;}
+.milestone-dot{width:10px;height:10px;border-radius:50%;background:var(--pink-dark);flex-shrink:0;}
+.today-list{display:flex;flex-direction:column;gap:12px;}
+.today-item{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.today-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.today-mission-name{font-size:15px;font-weight:600;}
+.modal-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.modal-tab{padding:8px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);}
+.modal-tab.active{color:var(--pink-dark);border-bottom-color:var(--pink-dark);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo"><i class="ti ti-rocket" aria-hidden="true"></i> MissionTrack</div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" onclick="showTab('today')"><i class="ti ti-calendar-check"></i> Today</button>
+      <button class="btn btn-primary btn-sm" onclick="openNewMission()"><i class="ti ti-plus"></i> New Mission</button>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="nav-tab active" onclick="showTab('dashboard')" id="tab-dashboard">Dashboard</div>
+    <div class="nav-tab" onclick="showTab('missions')" id="tab-missions">Missions</div>
+    <div class="nav-tab" onclick="showTab('today')" id="tab-today">Today</div>
+  </div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<!-- New Mission Modal -->
+<div class="overlay" id="mission-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title-text">New Mission</div>
+      <button class="close-btn" onclick="closeModal('mission-modal')">&times;</button>
+    </div>
+    <div class="form-group">
+      <label>Mission Name</label>
+      <input type="text" id="m-name" placeholder="e.g. Master Creative Writing"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="m-cat">
+          <option>Writing</option><option>Fitness</option><option>Coding</option>
+          <option>Language</option><option>Music</option><option>Art</option>
+          <option>Reading</option><option>Mindfulness</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Daily Goal (mins)</label>
+        <input type="number" id="m-time" placeholder="30" min="1"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="m-start"/>
+      </div>
+      <div class="form-group">
+        <label>End Date / Deadline</label>
+        <input type="date" id="m-end"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Your Goal / Vision</label>
+      <textarea id="m-goal" placeholder="What do you want to achieve?"></textarea>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="saveMission()">Create Mission</button>
+  </div>
+</div>
+
+<!-- Log Entry Modal -->
+<div class="overlay" id="entry-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="entry-modal-title">Log Today's Entry</div>
+      <button class="close-btn" onclick="closeModal('entry-modal')">&times;</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchEntryTab('log')" id="etab-log">Log Entry</div>
+      <div class="modal-tab" onclick="switchEntryTab('milestone')" id="etab-milestone">Add Milestone</div>
+    </div>
+    <div id="entry-log-form">
+      <div class="form-group">
+        <label>What did you do today?</label>
+        <textarea id="e-content" placeholder="Write your content, notes, or what you practiced..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Time Spent (mins)</label>
+        <input type="number" id="e-time" placeholder="30" min="1"/>
+      </div>
+      <div class="form-group">
+        <label>Reflection / Notes</label>
+        <textarea id="e-notes" placeholder="What did you notice? What was hard?"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Rate today's session</label>
+        <div class="stars" id="star-rating">
+          <span class="star" onclick="setRating(1)">&#9733;</span>
+          <span class="star" onclick="setRating(2)">&#9733;</span>
+          <span class="star" onclick="setRating(3)">&#9733;</span>
+          <span class="star" onclick="setRating(4)">&#9733;</span>
+          <span class="star" onclick="setRating(5)">&#9733;</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="saveEntry()">Save Entry</button>
+    </div>
+    <div id="entry-milestone-form" style="display:none">
+      <div class="form-group">
+        <label>Milestone title</label>
+        <input type="text" id="ms-title" placeholder="e.g. Wrote 500 words without stopping!"/>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="ms-desc" placeholder="Describe this achievement..."></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="saveMilestone()">Save Milestone</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js');
+}
+
+const COLORS=[
+  {bg:'#fde2e8',dark:'#c97a8f',text:'#7a3048'},
+  {bg:'#e8d5f5',dark:'#9b72c0',text:'#4a2270'},
+  {bg:'#c9f0e1',dark:'#4aad82',text:'#1a5c42'},
+  {bg:'#fde2c8',dark:'#e89456',text:'#7a4010'},
+  {bg:'#c8e8fa',dark:'#5aaad4',text:'#1a4a6a'},
+  {bg:'#fdf0c2',dark:'#d4a82a',text:'#6a4a00'},
+];
+const QUOTES=[
+  "Small steps every day lead to big results.",
+  "Progress, not perfection.",
+  "Every expert was once a beginner.",
+  "Consistency is the key to mastery.",
+  "You are building something beautiful — one day at a time.",
+  "The secret of getting ahead is getting started.",
+  "Growth is not always visible, but it is always happening.",
+  "Show up today. That's all that matters.",
+];
+
+let state={missions:[],currentRating:0};
+let ratingChart=null;
+
+function load(){try{const s=localStorage.getItem('mtrack_v2');if(s)state=JSON.parse(s);}catch(e){}}
+function save(){localStorage.setItem('mtrack_v2',JSON.stringify(state));}
+function today(){return new Date().toISOString().split('T')[0];}
+function formatDate(d){if(!d)return'';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function daysLeft(end){if(!end)return null;const ms=new Date(end+'T00:00:00')-new Date(today()+'T00:00:00');return Math.max(0,Math.ceil(ms/86400000));}
+function getColor(idx){return COLORS[idx%COLORS.length];}
+function getMissionProgress(m){
+  if(!m.startDate||!m.endDate)return 0;
+  const total=new Date(m.endDate)-new Date(m.startDate);
+  const elapsed=new Date()-new Date(m.startDate);
+  return Math.min(100,Math.max(0,Math.round((elapsed/total)*100)));
+}
+function getStreak(m){
+  const entries=m.entries||[];
+  if(!entries.length)return 0;
+  const dates=[...new Set(entries.map(e=>e.date))].sort().reverse();
+  let streak=0,d=new Date(today()+'T00:00:00');
+  for(let i=0;i<dates.length;i++){
+    const ed=new Date(dates[i]+'T00:00:00');
+    const diff=(d-ed)/86400000;
+    if(diff<=1){streak++;d=ed;}else break;
+  }
+  return streak;
+}
+function hasEntryToday(m){return(m.entries||[]).some(e=>e.date===today());}
+
+let activeTab='dashboard';
+function showTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const el=document.getElementById('tab-'+tab);
+  if(el)el.classList.add('active');
+  if(tab==='dashboard')renderDashboard();
+  else if(tab==='missions')renderMissions();
+  else if(tab==='today')renderToday();
+}
+
+function renderDashboard(){
+  const total=state.missions.length;
+  const done=state.missions.filter(m=>hasEntryToday(m)).length;
+  const allStreak=state.missions.reduce((a,m)=>a+getStreak(m),0);
+  const allEntries=state.missions.reduce((a,m)=>a+(m.entries||[]).length,0);
+  const quote=QUOTES[new Date().getDay()%QUOTES.length];
+  let html=`
+  <div class="quote-bar">
+    <i class="ti ti-sparkles quote-icon" aria-hidden="true"></i>
+    <div class="quote-text">"${quote}"</div>
+  </div>
+  <div class="dash-grid">
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Missions</div></div>
+    <div class="stat-card"><div class="stat-num">${done}/${total}</div><div class="stat-label">Done Today</div></div>
+    <div class="stat-card"><div class="stat-num">${allStreak}</div><div class="stat-label">Total Streaks</div></div>
+    <div class="stat-card"><div class="stat-num">${allEntries}</div><div class="stat-label">Total Entries</div></div>
+  </div>`;
+  if(!state.missions.length){
+    html+=`<div class="empty"><i class="ti ti-rocket"></i><div>No missions yet!<br>Create your first mission to begin.</div></div>`;
+  } else {
+    html+=`<div class="section-header"><div class="section-title">Your Missions</div></div><div class="missions-grid">`;
+    state.missions.forEach((m,i)=>{
+      const c=getColor(i);
+      const prog=getMissionProgress(m);
+      const streak=getStreak(m);
+      const dl=daysLeft(m.endDate);
+      const checked=hasEntryToday(m);
+      html+=`<div class="mission-card" onclick="openMissionDetail('${m.id}')">
+        <div class="mission-header">
+          <div class="mission-title">${m.name}</div>
+          <div class="cat-badge" style="background:${c.bg};color:${c.text}">${m.category}</div>
+        </div>
+        ${m.goal?`<div style="font-size:12px;color:#888;margin-bottom:8px;line-height:1.5">${m.goal.substring(0,80)}${m.goal.length>80?'...':''}</div>`:''}
+        <div class="progress-row">
+          <div class="progress-label"><span>Progress</span><span>${prog}%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${prog}%;background:${c.dark}"></div></div>
+        </div>
+        <div class="mission-footer">
+          <div class="streak" style="color:${c.dark}"><i class="ti ti-flame" aria-hidden="true"></i> ${streak} day streak</div>
+          ${dl!==null?`<div class="days-left">${dl} days left</div>`:''}
+          <div class="today-check" onclick="event.stopPropagation();toggleTodayCheck('${m.id}')">
+            <div class="check-circle${checked?' done':''}"><i class="ti ti-check" style="font-size:11px"></i></div>
+            <span>${checked?'Done':'Mark done'}</span>
+          </div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  document.getElementById('main-content').innerHTML=html;
+}
+
+function renderMissions(){
+  let html=`<div class="section-header"><div class="section-title">All Missions</div><button class="btn btn-primary btn-sm" onclick="openNewMission()"><i class="ti ti-plus"></i> New</button></div>`;
+  if(!state.missions.length){
+    html+=`<div class="empty"><i class="ti ti-target"></i><div>No missions yet. Create one!</div></div>`;
+  } else {
+    html+=`<div class="missions-grid">`;
+    state.missions.forEach((m,i)=>{
+      const c=getColor(i);
+      const prog=getMissionProgress(m);
+      const streak=getStreak(m);
+      const dl=daysLeft(m.endDate);
+      html+=`<div class="mission-card" onclick="openMissionDetail('${m.id}')">
+        <div class="mission-header">
+          <div class="mission-title">${m.name}</div>
+          <div class="cat-badge" style="background:${c.bg};color:${c.text}">${m.category}</div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-label"><span>Progress</span><span>${prog}%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${prog}%;background:${c.dark}"></div></div>
+        </div>
+        <div class="mission-footer">
+          <div class="streak" style="color:${c.dark}"><i class="ti ti-flame" aria-hidden="true"></i> ${streak} day streak</div>
+          ${dl!==null?`<div class="days-left">${dl} days left</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openLogEntry('${m.id}')"><i class="ti ti-plus"></i> Log</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteMission('${m.id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  document.getElementById('main-content').innerHTML=html;
+}
+
+function renderToday(){
+  const date=today();
+  let html=`<div class="section-header"><div class="section-title">Today — ${formatDat
